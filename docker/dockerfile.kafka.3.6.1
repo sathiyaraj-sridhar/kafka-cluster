@@ -1,0 +1,45 @@
+# syntax=docker/dockerfile:1
+
+# Set environment which is used to identify base image.
+ARG ENV=dev
+
+# Base image.
+FROM kafka-base:${ENV}
+
+# Set Java home path as environment variable.
+ENV JAVA_HOME=/usr/local/lib/java
+
+WORKDIR /tmp
+
+# Install Oracle JDK.
+COPY common/jdk-17_linux-x64_bin.tar.gz .
+RUN set -x\
+  && mkdir /usr/local/lib/java \
+  && tar xzf jdk-17_linux-x64_bin.tar.gz \
+  && cp -r jdk-17.0.10/* /usr/local/lib/java/ \
+  && rm -rf jdk-17*
+
+# Create a non-privileged user that the Kafka will run under.
+RUN useradd -m -s /bin/bash -d /usr/local/lib/kafka kafka
+
+# Install Kafka.
+COPY binary/kafka_2.12-3.6.1.tgz .
+RUN set -x \
+  && tar xzf kafka_2.12-3.6.1.tgz \
+  && cp -r kafka_2.12-3.6.1/* /usr/local/lib/kafka/ \
+  && chown -R kafka:kafka /usr/local/lib/kafka \
+  && rm -rf kafka_2.12-3.6.1*
+
+# Create necessary directories.
+RUN set -x \
+  && mkdir /opt/kafka \
+  && mkdir /opt/kafka/data \
+  && mkdir /opt/kafka/log \
+  && mkdir /opt/kafka/conf \
+  && mkdir /opt/kafka/script \
+  && touch /opt/kafka/system \
+  && chown -R kafka:kafka /opt/kafka \
+  && history -c
+
+# Set default work directory.
+WORKDIR /opt/kafka

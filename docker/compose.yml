@@ -1,0 +1,68 @@
+version: '3.8'
+services:
+  controller:
+    image: ${KAFKA_IMAGE}
+    entrypoint: /usr/local/bin/supervisord
+    command: "-c /etc/supervisord.conf"
+    environment:
+      - KAFKA_CLUSTER_ID=${KAFKA_CLUSTER_ID}
+      - KAFKA_HEAP_OPTS=${KAFKA_HEAP_OPTS}
+    volumes:
+      - controller-data:/opt/kafka/data
+      - ../source/conf/controller.properties:/opt/kafka/conf/server.properties
+      - ../source/script:/opt/kafka/script
+      - ../supervisor/supervisord.conf:/etc/supervisord.conf
+      - ../supervisor/controller.ini:/etc/supervisord.d/controller.ini
+    networks:
+      common:
+        ipv4_address: ${KAFKA_NODE_1_IP}
+  broker1:
+    image: ${KAFKA_IMAGE}
+    entrypoint: /usr/local/bin/supervisord
+    command: "-c /etc/supervisord.conf"
+    environment:
+      - KAFKA_CLUSTER_ID=${KAFKA_CLUSTER_ID}
+      - KAFKA_HEAP_OPTS=${KAFKA_HEAP_OPTS}
+    volumes:
+      - broker1-data:/opt/kafka/data
+      - ../source/conf/broker1.properties:/opt/kafka/conf/server.properties
+      - ../source/script:/opt/kafka/script
+      - ../supervisor/supervisord.conf:/etc/supervisord.conf
+      - ../supervisor/broker.ini:/etc/supervisord.d/broker.ini
+    networks:
+      common:
+        ipv4_address: ${KAFKA_NODE_2_IP}
+    depends_on:
+      - controller
+  broker2:
+    image: ${KAFKA_IMAGE}
+    entrypoint: /usr/local/bin/supervisord
+    command: "-c /etc/supervisord.conf"
+    environment:
+      - KAFKA_CLUSTER_ID=${KAFKA_CLUSTER_ID}
+      - KAFKA_HEAP_OPTS=${KAFKA_HEAP_OPTS}
+    volumes:
+      - broker2-data:/opt/kafka/data
+      - ../source/conf/broker2.properties:/opt/kafka/conf/server.properties
+      - ../source/script:/opt/kafka/script
+      - ../supervisor/supervisord.conf:/etc/supervisord.conf
+      - ../supervisor/broker.ini:/etc/supervisord.d/broker.ini
+    networks:
+      common:
+        ipv4_address: ${KAFKA_NODE_3_IP}
+    depends_on:
+      - controller
+volumes:
+  controller-data:
+    driver: local
+  broker1-data:
+    driver: local
+  broker2-data:
+    driver: local
+networks:
+  common:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${KAFKA_NODE_IP_RANGES}
