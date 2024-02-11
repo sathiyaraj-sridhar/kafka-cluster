@@ -52,4 +52,4 @@ git clone https://github.com/sathiyaraj-sridhar/kafka-cluster.git /opt/oss/kafka
 ## Guides
 
 **Development environment (DEV):**
-1. [Running three-node Kafka cluster in a Docker Container](wiki/dev-environment.md)
+1. [Running three-node Kafka cluster in a Docker Container](dev-environment.md)
