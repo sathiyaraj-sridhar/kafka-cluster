@@ -2,23 +2,23 @@
 
 ## Prerequisites
 
-- Ensure you installed Docker on your machine. If not, please follow their official documentation.[^1]
+- Ensure you installed Docker on your machine. If not, please follow Docker's official documentation.[^1]
 - Ensure you cloned our repository.
 
 ## Overview
 
 In this setup, we are going to:
-1. Write Dockerfile for building custom Docker image Kafka.
-2. Build the Docker image.
-3. Configure Kafka
-4. Run Kafka on three container.
+1. Write a Dockerfile for building a custom container image for Kafka.
+2. Build the base and Kafka container images.
+3. Configure Kafka cluster.
+4. Run Kafka cluster on three containers.
 
 > [!IMPORTANT] 
-> We strongly advise relying on the official documentation and support services [^2]. In this context, we offer a brief overview of the cluster setup with fundamental configurations.
+>I strongly recommend relying on the Kafka's official documentation and support services [^2]. In this context, I offer a brief overview of the cluster setup with fundamental configurations.
 
 ## Write a Dockerfile
 
-We have written two Dockerfiles, one for the base image and another for the Kafka image, which already exist in the `docker` directory.
+I have written two Dockerfiles, one for the base container image and another for the Kafka container image, which already exist in the `docker` directory.
 
 ```bash
 ├── docker
@@ -26,13 +26,19 @@ We have written two Dockerfiles, one for the base image and another for the Kafk
 │ └── dockerfile.kafka.3.6.1
 ```
 
-For best practices, 
-- we install all the necessary softwares, included testing and debugging tools in the base image. This approach applicable only for development (DEV) environment. 
-- We download and install Kafka binary tarballs in the Kafka image.
+For best practices,
+- Install all the necessary software, including testing and debugging tools, in the base container image. This approach is applicable only for development (DEV) environments.
+- Then Download and install Kafka in the Kafka container image.
 
-## Build the base and Kafka Docker image
+## Build the base and Kafka container image
 
-Here, we derive the base image from the **Amazon Linux 2023** Docker image. Then, we create the Kafka image based on the previously derived base image.
+Here, I derive the base container image from the **Amazon Linux 2023** container image. Then, I create the Kafka container image from the previously derived base container image.
+
+```mermaid
+graph TD;
+    A[Amazon Linux 2023 container image] --> B[base container image];
+    B --> C[Kafka container image];
+```
 
 **Step 1:** Switch to the `kafka-cluster` directory.
 
@@ -52,20 +58,19 @@ wget https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz -P d
 wget https://downloads.apache.org/kafka/3.6.1/kafka_2.12-3.6.1.tgz -P docker/context/binary
 ```
 
-**Step 4:** Build the base image.
+**Step 4:** Build the base container image.
 
 ```bash
 docker image build -t kafka-base:dev -f docker/dockerfile.base.dev docker/context
 ```
 
-**Step 5:** Build the Kafka image.  Suppose if you built separate base image for production and named `kafka-base:prd`, you can use `--build-arg="ENV=prd"` flag to change the `ENV` arguments value in the `dockerfile.kafka.3.6.1`.
+**Step 5:** Build the Kafka container image.  Suppose if you built separate base image for production and named `kafka-base:prd`, you can use `--build-arg="ENV=prd"` flag to change the `ENV` arguments value in the `dockerfile.kafka.3.6.1`.
 
 ```bash
 docker image build -t kafka:v3.6.1 -f docker/dockerfile.kafka.3.6.1 docker/context
 ```
 
-
-## Configure Kafka
+## Configure Kafka cluster
 
 When running the cluster setup, it is crucial to maintain quorum for cluster stability. So, we are going to provision three nodes, each being a Docker container. We have already stored the configuration for each node in the `source/conf` directory.  You can get the configuration template from their official documentation [^3].
 
@@ -79,9 +84,9 @@ When running the cluster setup, it is crucial to maintain quorum for cluster sta
 
 ## Run Kafka cluster
 
-It is good practice to store configurable variables in the `.env` file and use this file when bringing up the container using Docker Compose.
+It is considered good practice to store configuration settings in environment variables and inject these variable values from the shell into **Docker Compose** configuration at runtime.
 
-**Step 1:** Add an environment variable file.
+**Step 1:** Store configurations as environment variables in a file.
 
 - Open a new file. 
 
@@ -101,13 +106,13 @@ KAFKA_CLUSTER_ID="UVTnQrsIQFO2pzKQCb1y_g"
 KAFKA_HEAP_OPTS="-Xmx256M -Xms256M"
 ```
 
-**Step 2:** Up the Kafka cluster.
+**Step 2:** Create and start the containers for the Kafka cluster.
 
 ```bash
 docker compose -f docker/compose.yml --env-file docker/default.env -p kafka-cluster up -d
 ```
 
-**Step 3:** Down the Kafka cluster.
+**Step 3:** Stop and destroy the containers for the Kafka cluster.
 
 ```bash
 docker compose -f docker/compose.yml --env-file docker/default.env -p kafka-cluster down
@@ -115,7 +120,7 @@ docker compose -f docker/compose.yml --env-file docker/default.env -p kafka-clus
 
 ## Kafka cluster verification procedure.
 
-- Describe runtime state of the cluster using Metadata Quorum tool. SSH to Broker host then run the following command.
+- Describe runtime state of the cluster using Metadata Quorum tool.
 
 ```bash
 export NODE=broker1
@@ -151,20 +156,21 @@ export NODE=broker1
 docker container exec -it kafka-cluster-${NODE}-1 /usr/local/lib/kafka/bin/kafka-topics.sh --create --topic notifiy --bootstrap-server localhost:9092
 ```
 
-- Describe topic
+- Describe a specific topic.
 
 ```bash
 export NODE=broker1
 docker container exec -it kafka-cluster-${NODE}-1 /usr/local/lib/kafka/bin/kafka-topics.sh --describe --topic notifiy --bootstrap-server localhost:9092
 ```
 
-- Delete topic.
+- Delete a specific topic.
+
 ```bash
 export NODE=broker1
 docker container exec -it kafka-cluster-${NODE}-1 /usr/local/lib/kafka/bin/kafka-topics.sh --delete --topic notifiy --bootstrap-server localhost:9092
 ```
 
-## Other useful commands
+## Additional helpful commands
 
 ```bash
 export NODE=controller
