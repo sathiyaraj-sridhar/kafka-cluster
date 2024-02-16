@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Ensure you installed Docker on your machine. If not, please follow Docker's official documentation.[^1]
-- Ensure you cloned our repository.
+- Ensure you cloned the repository.
 
 ## Overview
 
@@ -176,6 +176,7 @@ docker container exec -it kafka-cluster-${NODE}-1 /usr/local/lib/kafka/bin/kafka
 export NODE=controller
 docker container exec -it kafka-cluster-${NODE}-1 /bin/bash
 docker container exec -it kafka-cluster-${NODE}-1 /usr/bin/netstat -ntlp
+docker container exec -it kafka-cluster-${NODE}-1 /usr/bin/ls /opt/kafka/data
 ```
 
 ## References
